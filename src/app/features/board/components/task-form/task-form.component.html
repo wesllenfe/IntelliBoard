@@ -1,0 +1,257 @@
+<div class="modal-backdrop" (click)="closed.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal__header">
+      <div class="modal__title-group">
+        <div class="modal__icon">
+          @if (task()) {
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+              <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          } @else {
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          }
+        </div>
+        <div>
+          <h2>{{ task() ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+          <p>{{ task() ? 'Atualize os detalhes abaixo.' : 'Preencha ou deixe a IA sugerir.' }}</p>
+        </div>
+      </div>
+      <button class="modal__close" (click)="closed.emit()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Banner IA aplicada -->
+    @if (aiWasUsed() && !aiLoading()) {
+      <div class="ai-banner" [class.ai-banner--modified]="userModified()">
+        <div class="ai-banner__left">
+          <span class="ai-banner__icon">✦</span>
+          @if (userModified()) {
+            <span>Sugestão da IA <strong>editada</strong> — campos personalizados</span>
+          } @else {
+            <span>Campos preenchidos pela <strong>IA</strong> — edite à vontade</span>
+          }
+        </div>
+        <span class="ai-banner__badge" [class.ai-banner__badge--modified]="userModified()">
+          {{ userModified() ? 'Editado' : 'IA aplicada' }}
+        </span>
+      </div>
+    }
+
+    <!-- Erro geral -->
+    @if (error()) {
+      <div class="alert-error">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M7 4v3.5M7 9.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ error() }}
+      </div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="form-body">
+
+        <!-- Título + botão IA -->
+        <div class="field field--full">
+          <label>Título <span class="required">*</span></label>
+          <div class="title-row">
+            <input
+              type="text"
+              placeholder="Ex: Implementar autenticação com OAuth..."
+              [ngModel]="title()"
+              (ngModelChange)="title.set($event)"
+              name="title"
+              autofocus
+            />
+            @if (!task()) {
+              <button
+                type="button"
+                class="btn-ai"
+                [class.btn-ai--loading]="aiLoading()"
+                [disabled]="!canAnalyze() || aiLoading()"
+                (click)="analyzeWithAi()"
+                title="Analisar com IA"
+              >
+                @if (aiLoading()) {
+                  <span class="spinner spinner--sm"></span>
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 1l1.8 5.5H16l-4.9 3.5 1.9 5.5L8 12l-5 3.5 1.9-5.5L1 6.5h6.2z" fill="currentColor"/>
+                  </svg>
+                }
+                {{ aiLoading() ? 'Analisando...' : 'Analisar com IA' }}
+              </button>
+            }
+          </div>
+
+          <!-- Erro da IA (não bloqueia) -->
+          @if (aiError()) {
+            <span class="field-hint field-hint--warn">⚠ {{ aiError() }}</span>
+          }
+          @if (!task() && !aiWasUsed() && canAnalyze()) {
+            <span class="field-hint">✦ Clique em "Analisar com IA" para sugestão automática</span>
+          }
+        </div>
+
+        <!-- Descrição -->
+        <div class="field field--full" [class.field--ai-filled]="aiWasUsed() && !userModified()">
+          <label>
+            Descrição
+            @if (aiWasUsed() && !userModified()) {
+              <span class="ai-tag">✦ IA</span>
+            }
+          </label>
+          <textarea
+            placeholder="Descreva os detalhes, critérios de aceite ou contexto..."
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event); markModified()"
+            name="description"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Prioridade + Categoria -->
+        <div class="field-row">
+          <div class="field" [class.field--ai-filled]="aiWasUsed() && !userModified()">
+            <label>
+              Prioridade
+              @if (aiWasUsed() && !userModified()) {
+                <span class="ai-tag">✦ IA</span>
+              }
+            </label>
+            <div class="select-wrap">
+              <select
+                [ngModel]="priority()"
+                (ngModelChange)="priority.set($event); markModified()"
+                name="priority"
+              >
+                <option value="baixa">Baixa</option>
+                <option value="media">Média</option>
+                <option value="alta">Alta</option>
+              </select>
+              <span class="priority-pill priority-pill--{{ priority() }}"></span>
+            </div>
+          </div>
+
+          <div class="field" [class.field--ai-filled]="aiWasUsed() && !userModified()">
+            <label>
+              Categoria
+              @if (aiWasUsed() && !userModified()) {
+                <span class="ai-tag">✦ IA</span>
+              }
+            </label>
+            <input
+              type="text"
+              placeholder="Ex: Frontend, Backend..."
+              [ngModel]="category()"
+              (ngModelChange)="category.set($event); markModified()"
+              name="category"
+            />
+          </div>
+        </div>
+
+        <!-- Deadline -->
+        <div class="field">
+          <label>Deadline <span class="required">*</span></label>
+          <input
+            type="date"
+            [ngModel]="deadline()"
+            (ngModelChange)="deadline.set($event)"
+            name="deadline"
+          />
+        </div>
+
+        <!-- Subtarefas -->
+        @if (subtasks().length > 0 || aiWasUsed()) {
+          <div class="subtasks-section">
+            <div class="subtasks-header">
+              <span class="subtasks-title">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 4h10M2 7h7M2 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Subtarefas
+                @if (aiWasUsed() && !userModified() && subtasks().length) {
+                  <span class="ai-tag">✦ IA</span>
+                }
+              </span>
+              <span class="subtasks-count">{{ subtasks().length }}</span>
+            </div>
+
+            <div class="subtasks-list">
+              @for (subtask of subtasks(); track $index) {
+                <div class="subtask-item" [class.subtask-item--done]="subtask.done">
+                  <button
+                    type="button"
+                    class="subtask-check"
+                    [class.subtask-check--done]="subtask.done"
+                    (click)="toggleSubtask($index)"
+                    title="{{ subtask.done ? 'Desmarcar' : 'Marcar como feito' }}"
+                  >
+                    @if (subtask.done) {
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    }
+                  </button>
+                  <input
+                    type="text"
+                    class="subtask-input"
+                    [value]="subtask.text"
+                    (input)="updateSubtask($index, $any($event.target).value)"
+                    placeholder="Descreva o passo..."
+                  />
+                  <button
+                    type="button"
+                    class="subtask-remove"
+                    (click)="removeSubtask($index)"
+                    title="Remover"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <button type="button" class="btn-add-subtask" (click)="addSubtask()">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Adicionar subtarefa
+            </button>
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal__footer">
+        @if (!task() && !aiWasUsed()) {
+          <button type="button" class="btn-add-subtask-footer" (click)="addSubtask()">
+            + Subtarefa manual
+          </button>
+        }
+        <div class="modal__footer-actions">
+          <button type="button" class="btn-cancel" (click)="closed.emit()">Cancelar</button>
+          <button type="submit" class="btn-save" [disabled]="loading()">
+            @if (loading()) {
+              <span class="spinner spinner--sm"></span>
+              Salvando...
+            } @else {
+              {{ task() ? 'Salvar alterações' : 'Criar tarefa' }}
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>

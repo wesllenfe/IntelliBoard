@@ -1,0 +1,169 @@
+<div class="board-layout">
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="navbar__brand">
+      <div class="navbar__mark">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M2 10h3l2-5 3 9 2-6h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="navbar__name">IntelliBoard</span>
+    </div>
+
+    <nav class="navbar__nav">
+      <a routerLink="/board" class="nav-link nav-link--active">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="1" width="6" height="14" rx="2" fill="currentColor" opacity=".5"/>
+          <rect x="9" y="1" width="6" height="9" rx="2" fill="currentColor"/>
+        </svg>
+        Board
+      </a>
+      <a routerLink="/dashboard" class="nav-link">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M2 12l4-4 3 3 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Dashboard
+      </a>
+    </nav>
+
+    <div class="navbar__right">
+      <div class="navbar__status">
+        <span class="status-dot"></span>
+        <span>Online</span>
+      </div>
+      <button class="btn-pomodoro-nav" (click)="showPomodoroSettings.set(true)" title="Configurações do Pomodoro">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 5v3.2l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Pomodoro
+      </button>
+      <button class="btn-signout" (click)="signOut()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M10 2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2M7 11l4-3-4-3M1 8h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <!-- Subheader -->
+  <div class="board-subheader">
+    <div class="board-subheader__left">
+      <h1>Meu Board</h1>
+      <span class="task-total">{{ tasks().length }} tarefas</span>
+
+      <!-- Pomodoro active indicator -->
+      @if (pomodoro.isActive()) {
+        <div class="pomodoro-status" [attr.data-phase]="pomodoro.phase()">
+          <span class="pomodoro-status__dot"></span>
+          <span class="pomodoro-status__time">{{ pomodoro.formatTime(pomodoro.remaining()) }}</span>
+          @if (pomodoro.activeTask()) {
+            <span class="pomodoro-status__task">{{ pomodoro.activeTask()!.title }}</span>
+          }
+        </div>
+      }
+    </div>
+    <button class="btn-new-task" (click)="openCreate('todo')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Nova tarefa
+    </button>
+  </div>
+
+  <!-- Overload Banner -->
+  @if (!loading() && inProgressCount() > 3) {
+    <div class="overload-banner">
+      <span class="overload-banner__icon">⚠</span>
+      <div>
+        <strong>Sobrecarga detectada</strong>
+        <span>Você tem {{ inProgressCount() }} tarefas em andamento. Considere focar em uma de cada vez.</span>
+      </div>
+    </div>
+  }
+
+  <!-- Board -->
+  <main class="board">
+    @if (loading()) {
+      <div class="board-loading">
+        <div class="loading-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <p>Carregando tarefas...</p>
+      </div>
+    } @else {
+      <div class="board__columns" cdkDropListGroup>
+        @for (col of columns; track col.id) {
+          <div class="board-column" [attr.data-col]="col.id">
+            <div class="board-column__stripe" [style.background]="col.color"></div>
+
+            <div class="board-column__header">
+              <div class="col-header-left">
+                <span class="col-dot" [style.background]="col.color" [style.box-shadow]="'0 0 8px ' + col.color + '66'"></span>
+                <h3>{{ col.label }}</h3>
+              </div>
+              <div class="col-header-right">
+                <span class="col-count">{{ columnTasks()(col.id).length }}</span>
+                <button class="btn-add" (click)="openCreate(col.id)" title="Adicionar tarefa">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="board-column__body"
+              cdkDropList
+              [cdkDropListData]="columnTasks()(col.id)"
+              [id]="col.id"
+              [cdkDropListConnectedTo]="colIds()"
+              (cdkDropListDropped)="drop($event, col.id)"
+            >
+              @for (task of columnTasks()(col.id); track task.id) {
+                <div cdkDrag [cdkDragData]="task">
+                  <app-task-card
+                    [task]="task"
+                    (editClicked)="openEdit($event)"
+                    (deleteClicked)="deleteTask($event)"
+                    (pomodoroStart)="startPomodoro($event)"
+                  />
+                  <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                </div>
+              }
+
+              @if (columnTasks()(col.id).length === 0) {
+                <div class="col-empty" (click)="openCreate(col.id)">
+                  <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span>Adicionar tarefa</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
+
+<!-- Timer Pomodoro (persiste na tela) -->
+<app-pomodoro-timer />
+
+<!-- Modal criação/edição -->
+@if (showForm()) {
+  <app-task-form
+    [task]="editingTask()"
+    [defaultColumn]="formColumn()"
+    (closed)="closeForm()"
+    (saved)="closeForm()"
+  />
+}
+
+<!-- Modal configurações Pomodoro -->
+@if (showPomodoroSettings()) {
+  <app-pomodoro-settings (closed)="showPomodoroSettings.set(false)" />
+}

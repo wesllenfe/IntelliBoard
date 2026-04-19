@@ -1,0 +1,99 @@
+<div class="settings-backdrop" (click)="closed.emit()">
+  <div class="settings-modal" (click)="$event.stopPropagation()">
+
+    <div class="settings-modal__header">
+      <div class="settings-modal__title">
+        <div class="settings-icon">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M8 5v3.2l2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Configurações do Pomodoro</h2>
+          <p>Personalize os tempos de cada fase.</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closed.emit()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="settings-body">
+
+      <!-- Foco -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Foco</span>
+          <span class="setting-desc">Duração de cada sessão de trabalho</span>
+        </div>
+        <div class="time-input-wrap">
+          <input
+            type="number"
+            class="time-input"
+            [value]="settings().focus_duration"
+            (change)="setNumber('focus_duration', $any($event.target).value)"
+            min="5" max="120"
+          />
+          <span class="time-unit">min</span>
+        </div>
+      </div>
+
+      <!-- Pausa curta -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Pausa curta</span>
+          <span class="setting-desc">Entre sessões de foco</span>
+        </div>
+        <div class="time-input-wrap">
+          <input
+            type="number"
+            class="time-input"
+            [value]="settings().short_break"
+            (change)="setNumber('short_break', $any($event.target).value)"
+            min="1" max="60"
+          />
+          <span class="time-unit">min</span>
+        </div>
+      </div>
+
+      <!-- Pausa longa -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Pausa longa</span>
+          <span class="setting-desc">Após 4 sessões de foco</span>
+        </div>
+        <div class="time-input-wrap">
+          <input
+            type="number"
+            class="time-input"
+            [value]="settings().long_break"
+            (change)="setNumber('long_break', $any($event.target).value)"
+            min="5" max="120"
+          />
+          <span class="time-unit">min</span>
+        </div>
+      </div>
+
+      <!-- Som -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Som de conclusão</span>
+          <span class="setting-desc">Toque ao finalizar cada fase</span>
+        </div>
+        <button
+          class="sound-toggle"
+          [class.sound-toggle--on]="settings().sound_enabled"
+          (click)="set('sound_enabled', !settings().sound_enabled)"
+          [attr.aria-label]="settings().sound_enabled ? 'Desativar som' : 'Ativar som'"
+        >
+          <span class="sound-toggle__knob"></span>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

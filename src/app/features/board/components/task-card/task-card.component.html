@@ -1,0 +1,93 @@
+<div
+  class="task-card"
+  [class.is-overdue]="isOverdue()"
+  [class.is-pomodoro-active]="isActivePomodoro()"
+  [class.is-pomodoro-other]="pomodoroOtherActive()"
+>
+  <div class="priority-bar priority-bar--{{ task().priority }}"></div>
+
+  <div class="task-card__inner">
+    <!-- Topo: badges + ações -->
+    <div class="task-card__top">
+      <div class="task-card__badges">
+        @if (task().category) {
+          <span class="badge badge--category">{{ task().category }}</span>
+        }
+        @if (task().ai_suggestion_accepted !== null) {
+          <span class="badge badge--ai" [title]="task().ai_suggestion_accepted ? 'Sugestão da IA aceita' : 'IA editada pelo usuário'">
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+              <path d="M5 1l1.2 3.6H10L7 6.6l1.2 3.4L5 7.8 1.8 10 3 6.6 0 4.6h3.8z" fill="currentColor"/>
+            </svg>
+            IA
+          </span>
+        }
+      </div>
+      <div class="task-card__actions">
+        <button class="action-btn" title="Editar" (click)="editClicked.emit(task())">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+            <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="action-btn action-btn--delete" title="Excluir" (click)="deleteClicked.emit(task().id)">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+            <path d="M2 4h10M5 4V3a1 1 0 011-1h2a1 1 0 011 1v1M6 7v4M8 7v4M3 4l1 8h6l1-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Título -->
+    <h3 class="task-card__title">{{ task().title }}</h3>
+
+    <!-- Descrição -->
+    @if (task().description) {
+      <p class="task-card__desc">{{ task().description }}</p>
+    }
+
+    <!-- Progresso de subtarefas -->
+    @if (subtaskTotal() > 0) {
+      <div class="subtask-progress">
+        <div class="subtask-progress__bar">
+          <div
+            class="subtask-progress__fill"
+            [style.width.%]="subtaskPercent()"
+            [class.subtask-progress__fill--done]="subtaskPercent() === 100"
+          ></div>
+        </div>
+        <span class="subtask-progress__label">{{ subtaskDone() }}/{{ subtaskTotal() }}</span>
+      </div>
+    }
+
+    <!-- Footer -->
+    <div class="task-card__footer">
+      <span class="deadline" [class.deadline--overdue]="isOverdue()">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M4 1v2M10 1v2M1 6h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        {{ task().deadline | date: 'dd/MM/yy' }}
+        @if (isOverdue()) { · atrasada }
+      </span>
+
+      <!-- Indicador / botão Pomodoro -->
+      @if (isActivePomodoro()) {
+        <div class="pomodoro-badge" [class.pomodoro-badge--running]="pomodoroRunning()">
+          <span class="pomodoro-pulse"></span>
+          <span class="pomodoro-time">{{ pomodoroTime() }}</span>
+        </div>
+      } @else {
+        <button
+          class="btn-pomodoro"
+          [disabled]="pomodoroOtherActive()"
+          [title]="pomodoroOtherActive() ? 'Outra tarefa ativa' : 'Iniciar foco'"
+          (click)="pomodoroStart.emit(task())"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 5v3.2l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      }
+    </div>
+  </div>
+</div>
