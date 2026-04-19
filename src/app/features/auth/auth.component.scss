@@ -28,25 +28,10 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
 
-  &__mark {
-    width: 30px;
-    height: 30px;
+  &__logo {
+    display: block;
     border-radius: var(--radius-sm);
-    background: var(--color-accent-dim);
-    border: 1px solid var(--color-accent-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-accent);
-  }
-
-  &__name {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-text);
-    letter-spacing: -0.3px;
   }
 }
 

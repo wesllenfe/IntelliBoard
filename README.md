@@ -1,6 +1,8 @@
-# IntelliBoard
+<p align="center">
+  <img src="public/logo.svg" alt="IntelliBoard" height="48" />
+</p>
 
-Kanban board com IA integrada, timer Pomodoro por tarefa e dashboard de produtividade.
+<p align="center">Kanban board com IA integrada, timer Pomodoro por tarefa e dashboard de produtividade.</p>
 
 ![Angular](https://img.shields.io/badge/Angular-21-dd0031?logo=angular&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ecf8e?logo=supabase&logoColor=white)

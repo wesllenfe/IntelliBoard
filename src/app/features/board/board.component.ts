@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
-  CdkDragDrop, CdkDrag, CdkDropList, CdkDropListGroup,
+  CdkDragDrop, CdkDrag, CdkDropList, CdkDropListGroup, CdkDragPlaceholder,
   moveItemInArray, transferArrayItem,
 } from '@angular/cdk/drag-drop';
 
@@ -21,7 +21,7 @@ import { PomodoroSettingsComponent } from './components/pomodoro-settings/pomodo
   selector: 'app-board',
   imports: [
     RouterLink,
-    CdkDropListGroup, CdkDropList, CdkDrag,
+    CdkDropListGroup, CdkDropList, CdkDrag, CdkDragPlaceholder,
     TaskCardComponent, TaskFormComponent,
     PomodoroTimerComponent, PomodoroSettingsComponent,
   ],
